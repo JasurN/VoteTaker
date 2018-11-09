@@ -7,21 +7,30 @@ import android.content.res.Resources;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    TextView partyInfoTextView;
     LinearLayout mainLayout;
+    LinearLayout spinnerLayout;
     EditText firstNameEditText;
     EditText lastNameEditText;
     RadioGroup chooseRadioGroup;
     RadioButton agreeRadioButton;
     RadioButton disagreeRadioButton;
+    Spinner drinkSpin;
+    Spinner foodsSpin;
+
+    Boolean isSpinnerVisible = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,29 +43,37 @@ public class MainActivity extends AppCompatActivity {
     private void init() {
         mainLayout = findViewById(R.id.mainActivityLinearLayout);
 
-        generatePartyInfoTextView();
+        mainLayout.addView(generateTextViewWithText("Will you come to the party? If you come what type of food and drink you want?"
+                , 0, 1, 0));
         generateFirstAndLastNameEditTexts();
         generateChooseRadioButtons();
+        generateDrinksAndFoodSpinner();
     }
 
     @SuppressLint("SetTextI18n")
-    private void generatePartyInfoTextView() {
+    private TextView generateTextViewWithText(String text, int marginTop, int isPadding, int marginStart) {
+        int paddingValue = 0;
+        if (isPadding >= 1) {
+            paddingValue = dpToPx(10);
+        }
         LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, dpToPx(marginTop), 0, 0);
+        params.setMarginStart(dpToPx(marginStart));
 
-        partyInfoTextView = new TextView(this);
-        partyInfoTextView.setText("Will you come to the party? If you come what type of food and drink you want?");
-        int paddingValue = dpToPx(10);
-        partyInfoTextView.setPadding(paddingValue, paddingValue, paddingValue, paddingValue);
-        partyInfoTextView.setTextSize(dpToPx(7));
-        partyInfoTextView.setLayoutParams(params);
+        TextView sampleTextView = new TextView(this);
+        sampleTextView.setText(text);
+        sampleTextView.setPadding(paddingValue, paddingValue, paddingValue, paddingValue);
+        sampleTextView.setTextSize(dpToPx(7));
+        sampleTextView.setLayoutParams(params);
 
-        mainLayout.addView(partyInfoTextView);
+        return sampleTextView;
     }
 
     private void generateFirstAndLastNameEditTexts() {
         LinearLayout.LayoutParams params = generateParams((int) (getScreenWidth(this) * 0.45),
                 dpToPx(50));
+        params.setMarginStart(dpToPx(10));
         firstNameEditText = generateEditText("First Name");
         lastNameEditText = generateEditText("Last Name");
 
@@ -66,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
         LinearLayout.LayoutParams paramsForLayout = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         paramsForLayout.setMargins(0, dpToPx(15), 0, 0);
-        LinearLayout editTextViewLayout = generateLinearLayout(paramsForLayout);
+        LinearLayout editTextViewLayout = generateLinearLayout(paramsForLayout, LinearLayout.HORIZONTAL);
 
         editTextViewLayout.addView(firstNameEditText);
         editTextViewLayout.addView(lastNameEditText);
@@ -94,15 +111,59 @@ public class MainActivity extends AppCompatActivity {
         disagreeRadioButton.setText("Disagree");
         disagreeRadioButton.setTextSize(dpToPx(7));
 
+        chooseRadioGroup.setOnCheckedChangeListener(radioGroupOnCheckedChangeListener);
+
         chooseRadioGroup.addView(agreeRadioButton);
         chooseRadioGroup.addView(disagreeRadioButton);
         mainLayout.addView(chooseRadioGroup);
 
     }
 
-    private LinearLayout generateLinearLayout(LinearLayout.LayoutParams params) {
+    private void generateDrinksAndFoodSpinner() {
+        List<String> drinks = new ArrayList<>();
+        drinks.add("Coca-Cola");
+        drinks.add("Fanta");
+        drinks.add("Sprite");
+        drinks.add("Water");
+
+        List<String> foods = new ArrayList<>();
+        foods.add("Fried potatoes");
+        foods.add("Seafood");
+        foods.add("Rice");
+        foods.add("Pasta");
+
+        drinkSpin = new Spinner(this);
+        ArrayAdapter<String> drinkAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, drinks);
+        drinkAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        drinkSpin.setAdapter(drinkAdapter);
+
+        foodsSpin = new Spinner(this);
+        ArrayAdapter<String> foodsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, foods);
+        foodsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        foodsSpin.setAdapter(foodsAdapter);
+
+
+        LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMarginStart(dpToPx(15));
+
+        drinkSpin.setLayoutParams(params);
+        foodsSpin.setLayoutParams(params);
+
+        spinnerLayout = generateLinearLayout(generateParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT), LinearLayout.VERTICAL);
+
+        spinnerLayout.addView(generateTextViewWithText("Drinks", 20, 0, 10));
+        spinnerLayout.addView(drinkSpin);
+        spinnerLayout.addView(generateTextViewWithText("Food", 5, 0, 10));
+        spinnerLayout.addView(foodsSpin);
+
+        mainLayout.addView(spinnerLayout);
+    }
+
+    private LinearLayout generateLinearLayout(LinearLayout.LayoutParams params, int orientation) {
         LinearLayout generatedLayout = new LinearLayout(this);
-        generatedLayout.setOrientation(LinearLayout.HORIZONTAL);
+        generatedLayout.setOrientation(orientation);
         generatedLayout.setLayoutParams(params);
 
         return generatedLayout;
@@ -124,10 +185,6 @@ public class MainActivity extends AppCompatActivity {
         return params;
     }
 
-    public static int pxToDp(int px) {
-        return (int) (px / Resources.getSystem().getDisplayMetrics().density);
-    }
-
     public static int dpToPx(double dp) {
         return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
     }
@@ -138,4 +195,19 @@ public class MainActivity extends AppCompatActivity {
         return displayMetrics.widthPixels;
     }
 
+    private RadioGroup.OnCheckedChangeListener radioGroupOnCheckedChangeListener = new RadioGroup.OnCheckedChangeListener() {
+        public void onCheckedChanged(RadioGroup group, int checkedId) {
+            int clickedRadioButton = chooseRadioGroup.getCheckedRadioButtonId();
+            if (clickedRadioButton == 1) {
+                if (!isSpinnerVisible) {
+                    isSpinnerVisible = true;
+                    spinnerLayout.setVisibility(View.VISIBLE);
+                }
+            } else if (clickedRadioButton == 2) {
+                isSpinnerVisible = false;
+                spinnerLayout.setVisibility(View.INVISIBLE);
+
+            }
+        }
+    };
 }
