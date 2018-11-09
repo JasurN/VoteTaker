@@ -9,13 +9,13 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     RadioButton disagreeRadioButton;
     Spinner drinkSpin;
     Spinner foodsSpin;
+    CheckBox fileReadCheckBoxOption;
 
     Boolean isSpinnerVisible = true;
 
@@ -48,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
         generateFirstAndLastNameEditTexts();
         generateChooseRadioButtons();
         generateDrinksAndFoodSpinner();
+        generateReadFromFileCheckBox();
     }
 
     @SuppressLint("SetTextI18n")
@@ -116,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
         chooseRadioGroup.addView(agreeRadioButton);
         chooseRadioGroup.addView(disagreeRadioButton);
         mainLayout.addView(chooseRadioGroup);
-
     }
 
     private void generateDrinksAndFoodSpinner() {
@@ -143,15 +144,16 @@ public class MainActivity extends AppCompatActivity {
         foodsSpin.setAdapter(foodsAdapter);
 
 
-        LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, dpToPx(5), 0, 0);
         params.setMarginStart(dpToPx(15));
 
         drinkSpin.setLayoutParams(params);
         foodsSpin.setLayoutParams(params);
 
-        spinnerLayout = generateLinearLayout(generateParams(LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT), LinearLayout.VERTICAL);
+        spinnerLayout = generateLinearLayout(generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT), LinearLayout.VERTICAL);
 
         spinnerLayout.addView(generateTextViewWithText("Drinks", 20, 0, 10));
         spinnerLayout.addView(drinkSpin);
@@ -159,6 +161,21 @@ public class MainActivity extends AppCompatActivity {
         spinnerLayout.addView(foodsSpin);
 
         mainLayout.addView(spinnerLayout);
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void generateReadFromFileCheckBox() {
+        LinearLayout.LayoutParams  params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, dpToPx(15), 0 ,0);
+        params.setMarginStart(dpToPx(7));
+
+        fileReadCheckBoxOption = new CheckBox(this);
+        fileReadCheckBoxOption.setText("Read votes from votes.txt");
+        fileReadCheckBoxOption.setTextSize(dpToPx(6));
+        fileReadCheckBoxOption.setLayoutParams(params);
+
+        spinnerLayout.addView(fileReadCheckBoxOption);
     }
 
     private LinearLayout generateLinearLayout(LinearLayout.LayoutParams params, int orientation) {
@@ -181,7 +198,6 @@ public class MainActivity extends AppCompatActivity {
                 , heightLayoutParameter
         );
         params.setMarginStart(10);
-
         return params;
     }
 
@@ -206,7 +222,6 @@ public class MainActivity extends AppCompatActivity {
             } else if (clickedRadioButton == 2) {
                 isSpinnerVisible = false;
                 spinnerLayout.setVisibility(View.INVISIBLE);
-
             }
         }
     };
