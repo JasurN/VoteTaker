@@ -8,6 +8,8 @@ import android.content.res.Resources;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -18,6 +20,19 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
     Button vote_Button;
     Button check_Vote_Button;
     Boolean isSpinnerVisible = true;
+    List<String> drinks;
+    List<String> foods;
+    StringBuilder stringBuilder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,10 +67,16 @@ public class MainActivity extends AppCompatActivity {
         main_Layout.addView(generateTextViewWithText("Will you come to the party? " +
                         "If you come what type of food and drink you want?"
                 , 0, 1, 0));
+
         generateFirstAndLastNameEditTexts();
         generateChooseRadioButtons();
         generateDrinksAndFoodSpinner();
         generateReadFromFileCheckBox();
+        generateButtonWithOnClickListener("Vote", 1);
+        generateButtonWithOnClickListener("Check Votes", 2);
+        //someInit();
+        //readMessage();
+
     }
 
     @SuppressLint("SetTextI18n")
@@ -108,15 +132,16 @@ public class MainActivity extends AppCompatActivity {
         choose_RadioGroup.setLayoutParams(params);
 
 
-        agreeRadioButton = new RadioButton(this);
-        agreeRadioButton.setText("Agree");
-        agreeRadioButton.setTextSize(dpToPx(7));
+        agree_RadioButton = new RadioButton(this);
+        agree_RadioButton.setText("Agree");
+        agree_RadioButton.setTextSize(dpToPx(7));
 
         disagree_RadioButton = new RadioButton(this);
         disagree_RadioButton.setText("Disagree");
         disagree_RadioButton.setTextSize(dpToPx(7));
 
-        chooseRadioGroup.setOnCheckedChangeListener(radioGroupOnCheckedChangeListener);
+        choose_RadioGroup.setOnCheckedChangeListener(radioGroupOnCheckedChangeListener);
+
 
         choose_RadioGroup.addView(agree_RadioButton);
         choose_RadioGroup.addView(disagree_RadioButton);
@@ -124,27 +149,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void generateDrinksAndFoodSpinner() {
-        List<String> drinks = new ArrayList<>();
-        drinks.add("Coca-Cola");
-        drinks.add("Fanta");
-        drinks.add("Sprite");
-        drinks.add("Water");
+        drinks = new ArrayList<>();
+        fillLists("liquid.txt");
 
-        List<String> foods = new ArrayList<>();
-        foods.add("Fried potatoes");
-        foods.add("Seafood");
-        foods.add("Rice");
-        foods.add("Pasta");
+        foods = new ArrayList<>();
+        fillLists("foods.txt");
 
         drink_Spin = new Spinner(this);
         ArrayAdapter<String> drinkAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, drinks);
         drinkAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        drinkSpin.setAdapter(drinkAdapter);
+        drink_Spin.setSelection(0);
+        drink_Spin.setAdapter(drinkAdapter);
 
         foods_Spin = new Spinner(this);
         ArrayAdapter<String> foodsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, foods);
         foodsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        foodsSpin.setAdapter(foodsAdapter);
+        foods_Spin.setSelection(0);
+        foods_Spin.setAdapter(foodsAdapter);
 
 
         LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -240,6 +261,119 @@ public class MainActivity extends AppCompatActivity {
         return displayMetrics.widthPixels;
     }
 
+    private void createIntentForVoteTakerResult(boolean isReadFromFile) {
+        Intent voteTakerActivityIntent = new Intent(this, VoteResultActivity.class);
+        voteTakerActivityIntent.putExtra("isReadFromFile", isReadFromFile);
+        if (stringBuilder != null && isReadFromFile == false) {
+            voteTakerActivityIntent.putExtra("voteStr", stringBuilder.toString());
+        }
+        startActivity(voteTakerActivityIntent);
+    }
+
+    private void addVoteOptionToStringBuilder() {
+        String firstName = first_Name_EditText.getText().toString();
+        String lastName = last_Name_EditText.getText().toString();
+        String voteTakerStr;
+        stringBuilder = new StringBuilder();
+
+        if (isSpinnerVisible) {
+            String drinkChoose = drinks.get(drink_Spin.getSelectedItemPosition());
+            String foodChoose = foods.get(foods_Spin.getSelectedItemPosition());
+            voteTakerStr = firstName + " " + lastName + " will come to the party and wants "
+                    + drinkChoose + " and " + foodChoose + ".";
+        } else {
+            voteTakerStr = firstName + " " + lastName + " will not come to the party.";
+        }
+
+        Toast.makeText(this, "Voted: " + voteTakerStr, Toast.LENGTH_SHORT).show();
+        stringBuilder.append("--->").append(voteTakerStr);
+        stringBuilder.append("\n");
+    }
+
+    private void fillLists(String filename) {
+        try {
+
+            createFileIfNotExists(filename);
+            InputStream inputStream = openFileInput(filename);
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String line;
+
+            if (filename.equals("liquids.txt")) {
+                while ((line = bufferedReader.readLine()) != null) {
+                    drinks.add(line);
+                }
+            } else {
+                while ((line = bufferedReader.readLine()) != null) {
+                    foods.add(line);
+                }
+            }
+
+            bufferedReader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void createFileIfNotExists(String filename) {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput(filename, Context.MODE_PRIVATE));
+            outputStreamWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void someInit() {
+        createFileIfNotExists("liquid.txt");
+        OutputStreamWriter outputStreamWriter;
+        try {
+            outputStreamWriter = new OutputStreamWriter(openFileOutput("liquid1.txt", Context.MODE_PRIVATE));
+
+            BufferedWriter bw = new BufferedWriter(outputStreamWriter);
+
+                bw.write("Coca-Cola");
+                bw.newLine();
+                bw.write("Fanta");
+                bw.newLine();
+                bw.write("Sprite");
+                bw.newLine();
+                bw.write("Water");
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+    }
+
+    private void readMessage() {
+        String readMessage;
+        try {
+            InputStream inputStream = openFileInput("liquid1.txt");
+
+            if ( inputStream != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString;
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                inputStream.close();
+                readMessage = stringBuilder.toString();
+                Toast.makeText(this, "message from: " + readMessage, Toast.LENGTH_SHORT).show();
+            }
+        }
+        catch (FileNotFoundException e) {
+            Log.e("login activity", "File not found: " + e.toString());
+        } catch (IOException e) {
+            Log.e("login activity", "Can not read file: " + e.toString());
+        }
+
+    }
+
     private RadioGroup.OnCheckedChangeListener radioGroupOnCheckedChangeListener = new RadioGroup.OnCheckedChangeListener() {
         public void onCheckedChanged(RadioGroup group, int checkedId) {
             int clickedRadioButton = choose_RadioGroup.getCheckedRadioButtonId();
@@ -250,7 +384,23 @@ public class MainActivity extends AppCompatActivity {
                 }
             } else if (clickedRadioButton == 2) {
                 isSpinnerVisible = false;
-                spinnerLayout.setVisibility(View.INVISIBLE);
+                spinner_Layout.setVisibility(View.INVISIBLE);
+            }
+        }
+    };
+
+    private Button.OnClickListener voteButtonOnClickListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            addVoteOptionToStringBuilder();
+        }
+    };
+
+    private Button.OnClickListener checkVoteButtonOnClickListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            if (file_Read_CheckBox_Option.isChecked()) {
+                createIntentForVoteTakerResult(true);
+            } else {
+                createIntentForVoteTakerResult(false);
             }
         }
     };
