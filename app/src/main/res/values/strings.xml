@@ -1,3 +1,34 @@
 <resources>
     <string name="app_name">Vote Taker</string>
+    <string name="long_text">Will you come to the party? If you come what type of food or drink you want?</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="disagree">Disagree</string>
+    <string name="agree">Agree</string>
+    <string name="drink">Drinks</string>
+    <string name="vote">Vote</string>
+    <string name="food">Foods</string>
+    <string name="check_votes">Check votes</string>
+    <string name="vote_list">Vote List</string>
+    <string name="check_box_string">Read votes from votes.txt</string>
+    <string-array name="drinks">
+        <item>Coca Cola</item>
+        <item>Fanta</item>
+        <item>Sprite</item>
+        <item>Nestle</item>
+        <item>Garzan</item>
+        <item>Water</item>
+    </string-array>
+    <string-array name="foods">
+        <item>Pilov</item>
+        <item>Soup</item>
+        <item>Mastava</item>
+        <item>Lagman</item>
+        <item>Samsa</item>
+        <item>Seafood</item>
+        <item>Rice</item>
+        <item>Fried potatoes</item>
+        <item>Fast food</item>
+    </string-array>
+
 </resources>

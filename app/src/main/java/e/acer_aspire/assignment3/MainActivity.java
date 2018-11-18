@@ -1,23 +1,19 @@
 package e.acer_aspire.assignment3;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Space;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,254 +21,173 @@ import android.widget.Toast;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
-public class MainActivity extends AppCompatActivity {
-    LinearLayout main_Layout;
-    LinearLayout spinner_Layout;
-    EditText first_Name_EditText;
-    EditText last_Name_EditText;
-    RadioGroup choose_RadioGroup;
-    RadioButton agree_RadioButton;
-    RadioButton disagree_RadioButton;
-    Spinner drink_Spin;
-    Spinner foods_Spin;
-    CheckBox file_Read_CheckBox_Option;
-    Button vote_Button;
-    Button check_Vote_Button;
-    Boolean isSpinnerVisible = true;
-    List<String> drinks;
-    List<String> foods;
-    StringBuilder stringBuilder;
+public class MainActivity extends GenerateView {
+
+    private LinearLayout mainLayout, firstLayout, spinnerLayout1, spinnerLayout2;
+    private EditText firstNameEditText, lastNameEditText;
+    private RadioGroup radioGroup;
+    private RadioButton agreeRadioButton, disagreeRadioButton;
+    private Spinner drinkSpinner, foodSpinner;
+    private Button voteButton, checkingVotesButton;
+    private LinearLayout.LayoutParams linear_params;
+    private List<String>drinks, foods;
+    private StringBuilder stringBuilder;
+    private CheckBox fileReadCheckBoxOption;
+    private OutputStreamWriter writingStream;
+    private File _file;
+    private String text;
+    private boolean isSpinnerVisible = true;
+    private static final String beverage_filename = "liquids.txt";
+    private static final String foods_filename = "foods.txt";
+    private static final String votes_filename = "votes.txt";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         init();
+        if (!isExist(votes_filename)) {
+            createNewOutputStream(votes_filename);
+        }
+
+        voteButton.setOnClickListener(onVoteClickListener);
+        checkingVotesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (fileReadCheckBoxOption.isChecked()) {
+                createIntent(true);
+                } else {
+                    createIntent(false);
+                }
+
+            }
+        });
     }
 
     private void init() {
-        main_Layout = findViewById(R.id.mainActivityLinearLayout);
+        mainLayout = (LinearLayout) findViewById(R.id.main_layout);
+        mainLayout.setPadding(20, 20, 20, 20);
 
-        main_Layout.addView(generateTextViewWithText("Will you come to the party? " +
-                        "If you come what type of food and drink you want?"
-                , 0, 1, 0));
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        TextView firstTextView = generateTextView(getResources().getString(R.string.long_text), 14, 0, 0, 0, 0);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        generateFirstAndLastNameEditTexts();
-        generateChooseRadioButtons();
-        generateDrinksAndFoodSpinner();
-        generateReadFromFileCheckBox();
-        generateButtonWithOnClickListener("Vote", 1);
-        generateButtonWithOnClickListener("Check Votes", 2);
-        //someInit();
-        //readMessage();
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        Space space1 = generateSpace(ViewGroup.LayoutParams.MATCH_PARENT, 30, 0, 0, 0, 0);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
 
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        firstLayout = getLinearLayoutContent(LinearLayout.HORIZONTAL, 0, 0, 0, 0);
+
+        //////////
+        firstNameEditText = generateEditText(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.5f,
+                EditorInfo.TYPE_CLASS_TEXT, android.R.drawable.editbox_background_normal, R.string.first_name, 0, 0, 0, 0);
+
+        //////////
+        lastNameEditText = generateEditText(0, ViewGroup.LayoutParams.WRAP_CONTENT, 0.5f,
+                EditorInfo.TYPE_CLASS_TEXT, android.R.drawable.editbox_background_normal, R.string.last_name, 0, 0, 0, 0);
+        //////////
+        firstLayout.addView(firstNameEditText);
+        firstLayout.addView(lastNameEditText);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        Space space2 = generateSpace(ViewGroup.LayoutParams.MATCH_PARENT, 16, 0, 0, 0, 0);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        radioGroup = generateRadioGroup(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT, RadioGroup.HORIZONTAL, 0, 0, 0, 0);
+        //////////
+        agreeRadioButton = generateRadioButton(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f, false, R.string.agree, 0, 0, 0, 0);
+        //////////
+        disagreeRadioButton = generateRadioButton(LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f, false, R.string.disagree, 0, 0, 0, 0);
+        //////////
+        radioGroup.addView(agreeRadioButton);
+        radioGroup.addView(disagreeRadioButton);
+        radioGroup.check(1);
+        radioGroup.setOnCheckedChangeListener(radioGroupOnCheckedChangeListener);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        Space space3 = generateSpace(LinearLayout.LayoutParams.MATCH_PARENT, 16, 0, 0, 0, 0);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        spinnerLayout1 = getLinearLayoutContent(LinearLayout.VERTICAL, 0, 0, 0, 0);
+        //////////
+        drinkSpinner = generateSpinner(getList(beverage_filename), LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 5, 0, 0);
+        //////////
+        spinnerLayout1.addView(generateTextView(getResources().getString(R.string.drink), 15, 0, 0, 0, 0));
+        spinnerLayout1.addView(drinkSpinner);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        Space space4 = generateSpace(LinearLayout.LayoutParams.MATCH_PARENT, 20, 0, 0, 0, 0);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        spinnerLayout2 = getLinearLayoutContent(LinearLayout.VERTICAL, 0, 0, 0, 0);
+        //////////
+        foodSpinner = generateSpinner(getList(foods_filename), LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 5, 0, 0);
+        //////////
+        spinnerLayout2.addView(generateTextView(getResources().getString(R.string.food), 15, 0, 0, 0, 0));
+        spinnerLayout2.addView(foodSpinner);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        fileReadCheckBoxOption = generateCheckBox(getResources().getString(R.string.check_box_string), 14, 0, 15, 0, 10, 7);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        Space space5 = generateSpace(LinearLayout.LayoutParams.MATCH_PARENT, 20, 0, 0, 0, 0);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        voteButton = generateButton(245, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 0, 0, 0, R.string.vote,R.color.colorWhite);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        Space space6 = generateSpace(LinearLayout.LayoutParams.MATCH_PARENT, 20, 0, 0, 0, 0);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+        checkingVotesButton = generateButton(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 0, 0, 0, R.string.check_votes, R.color.colorWhite);
+        //////////////////////////////////////////////////////////////////////////////////////////////////
+
+        mainLayout.addView(firstTextView);
+        mainLayout.addView(space1);
+        mainLayout.addView(firstLayout);
+        mainLayout.addView(space2);
+        mainLayout.addView(radioGroup);
+        mainLayout.addView(space3);
+        mainLayout.addView(spinnerLayout1);
+        mainLayout.addView(space4);
+        mainLayout.addView(spinnerLayout2);
+        mainLayout.addView(fileReadCheckBoxOption);
+        mainLayout.addView(space5);
+        mainLayout.addView(voteButton);
+        mainLayout.addView(space6);
+        mainLayout.addView(checkingVotesButton);
     }
 
-    @SuppressLint("SetTextI18n")
-    private TextView generateTextViewWithText(String text, int marginTop, int isPadding, int marginStart) {
-        int paddingValue = 0;
-        if (isPadding >= 1) {
-            paddingValue = dpToPx(10);
-        }
-        LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dpToPx(marginTop), 0, 0);
-        params.setMarginStart(dpToPx(marginStart));
 
-        TextView sampleTextView = new TextView(this);
-        sampleTextView.setText(text);
-        sampleTextView.setPadding(paddingValue, paddingValue, paddingValue, paddingValue);
-        sampleTextView.setTextSize(dpToPx(7));
-        sampleTextView.setLayoutParams(params);
-
-        return sampleTextView;
-    }
-
-    private void generateFirstAndLastNameEditTexts() {
-        LinearLayout.LayoutParams params = generateParams((int) (getScreenWidth(this) * 0.45),
-                dpToPx(50));
-        params.setMarginStart(dpToPx(10));
-        first_Name_EditText = generateEditText("First Name");
-        last_Name_EditText = generateEditText("Last Name");
-
-        first_Name_EditText.setLayoutParams(params);
-        last_Name_EditText.setLayoutParams(params);
-
-        LinearLayout.LayoutParams paramsForLayout = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        paramsForLayout.setMargins(0, dpToPx(15), 0, 0);
-        LinearLayout editTextViewLayout = generateLinearLayout(paramsForLayout, LinearLayout.HORIZONTAL);
-
-        editTextViewLayout.addView(first_Name_EditText);
-        editTextViewLayout.addView(last_Name_EditText);
-
-        main_Layout.addView(editTextViewLayout);
-    }
-
-    @SuppressLint("SetTextI18n")
-    private void generateChooseRadioButtons() {
-        LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dpToPx(10), 0, 0);
-        params.setMarginStart(dpToPx(10));
-
-        choose_RadioGroup = new RadioGroup(this);
-        choose_RadioGroup.setOrientation(LinearLayout.HORIZONTAL);
-        choose_RadioGroup.setLayoutParams(params);
+    /////////////////////////////////////////////// Helper functions
 
 
-        agree_RadioButton = new RadioButton(this);
-        agree_RadioButton.setText("Agree");
-        agree_RadioButton.setTextSize(dpToPx(7));
 
-        disagree_RadioButton = new RadioButton(this);
-        disagree_RadioButton.setText("Disagree");
-        disagree_RadioButton.setTextSize(dpToPx(7));
-
-        choose_RadioGroup.setOnCheckedChangeListener(radioGroupOnCheckedChangeListener);
-
-
-        choose_RadioGroup.addView(agree_RadioButton);
-        choose_RadioGroup.addView(disagree_RadioButton);
-        main_Layout.addView(choose_RadioGroup);
-    }
-
-    private void generateDrinksAndFoodSpinner() {
-        drinks = new ArrayList<>();
-        fillLists("liquid.txt");
-
-        foods = new ArrayList<>();
-        fillLists("foods.txt");
-
-        drink_Spin = new Spinner(this);
-        ArrayAdapter<String> drinkAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, drinks);
-        drinkAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        drink_Spin.setSelection(0);
-        drink_Spin.setAdapter(drinkAdapter);
-
-        foods_Spin = new Spinner(this);
-        ArrayAdapter<String> foodsAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, foods);
-        foodsAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        foods_Spin.setSelection(0);
-        foods_Spin.setAdapter(foodsAdapter);
-
-
-        LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dpToPx(5), 0, 0);
-        params.setMarginStart(dpToPx(15));
-
-        drink_Spin.setLayoutParams(params);
-        foods_Spin.setLayoutParams(params);
-
-        spinner_Layout = generateLinearLayout(generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT), LinearLayout.VERTICAL);
-
-        spinner_Layout.addView(generateTextViewWithText("Drinks", 20, 0, 10));
-        spinner_Layout.addView(drink_Spin);
-        spinner_Layout.addView(generateTextViewWithText("Food", 5, 0, 10));
-        spinner_Layout.addView(foods_Spin);
-
-        main_Layout.addView(spinner_Layout);
-    }
-
-    @SuppressLint("SetTextI18n")
-    private void generateReadFromFileCheckBox() {
-        LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dpToPx(15), 0, dpToPx(10));
-        params.setMarginStart(dpToPx(7));
-
-        file_Read_CheckBox_Option = new CheckBox(this);
-        file_Read_CheckBox_Option.setText("Read votes from votes.txt");
-        file_Read_CheckBox_Option.setTextSize(dpToPx(6));
-        file_Read_CheckBox_Option.setLayoutParams(params);
-
-        spinner_Layout.addView(file_Read_CheckBox_Option);
-    }
-
-    /**
-     * [1] String button name
-     * [2] button option - (1) vote button; (2) check votes button
-     */
-    private void  generateButtonWithOnClickListener(String buttonName, int buttonOption) {
-        LinearLayout.LayoutParams params = generateParams(LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, dpToPx(5), 0, 0);
-        params.gravity = Gravity.CENTER;
-
-        Button sampleButton = new Button(this);
-        sampleButton.setTextSize(dpToPx(7));
-        sampleButton.setLayoutParams(params);
-        sampleButton.setText(buttonName);
-
-        if (buttonOption == 1) {
-            vote_Button = sampleButton;
-            vote_Button.setOnClickListener(voteButtonOnClickListener);
-        } else if (buttonOption == 2) {
-            check_Vote_Button = sampleButton;
-            check_Vote_Button.setOnClickListener(checkVoteButtonOnClickListener);
-        }
-
-        main_Layout.addView(sampleButton);
-    }
-
-    private LinearLayout generateLinearLayout(LinearLayout.LayoutParams params, int orientation) {
-        LinearLayout generatedLayout = new LinearLayout(this);
-        generatedLayout.setOrientation(orientation);
-        generatedLayout.setLayoutParams(params);
-
-        return generatedLayout;
-    }
-
-    private EditText generateEditText(String hint) {
-        EditText sampleEditText = new EditText(this);
-        sampleEditText.setHint(hint);
-        return sampleEditText;
-    }
-
-    private LinearLayout.LayoutParams generateParams(int widthLayoutParameter, int heightLayoutParameter) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                widthLayoutParameter
-                , heightLayoutParameter
-        );
-        params.setMarginStart(10);
-        return params;
-    }
-
-    private static int dpToPx(double dp) {
-        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
-    }
-
-    private static int getScreenWidth(Context context) {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        return displayMetrics.widthPixels;
-    }
-
-    private void createIntentForVoteTakerResult(boolean isReadFromFile) {
-        Intent voteTakerActivityIntent = new Intent(this, VoteResultActivity.class);
-        voteTakerActivityIntent.putExtra("isReadFromFile", isReadFromFile);
-        if (stringBuilder != null && isReadFromFile == false) {
-            voteTakerActivityIntent.putExtra("voteStr", stringBuilder.toString());
-        }
-        startActivity(voteTakerActivityIntent);
-    }
-
-    private void addVoteOptionToStringBuilder() {
-        String firstName = first_Name_EditText.getText().toString();
-        String lastName = last_Name_EditText.getText().toString();
+    /////////////////////////////////////////////// File functions
+    /*private void addVoteOptionToStringBuilder() {
+        String firstName = firstNameEditText.getText().toString();
+        String lastName = lastNameEditText.getText().toString();
         String voteTakerStr;
         stringBuilder = new StringBuilder();
 
@@ -288,120 +203,119 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Voted: " + voteTakerStr, Toast.LENGTH_SHORT).show();
         stringBuilder.append("--->").append(voteTakerStr);
         stringBuilder.append("\n");
+    }*/
+
+    private String getFilename(String filename) {
+        String[] temp = filename.split("[.]");
+        return temp[0];
     }
 
-    private void fillLists(String filename) {
+    private List<String> getList(String filename) {
+        filename = getFilename(filename);
+        Scanner scanner = new Scanner(getResources().openRawResource(getResources().getIdentifier(filename, "raw", getPackageName())));
+        List<String>list = new ArrayList<>();
+        while (scanner.hasNextLine()) {
+            list.add(scanner.nextLine());
+
+        }
+        return list;
+    }
+
+    public boolean isExist(String filename) {
+        File packagePath = new File(getPackageName(), "raw");
+        File file = new File(packagePath, filename);
+        return file.exists();
+    }
+
+    private void createNewOutputStream(String filename) {
         try {
-
-            createFileIfNotExists(filename);
-            InputStream inputStream = openFileInput(filename);
-            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            String line;
-
-            if (filename.equals("liquids.txt")) {
-                while ((line = bufferedReader.readLine()) != null) {
-                    drinks.add(line);
-                }
-            } else {
-                while ((line = bufferedReader.readLine()) != null) {
-                    foods.add(line);
-                }
-            }
-
-            bufferedReader.close();
+            writingStream = new OutputStreamWriter(openFileOutput(filename, Context.MODE_PRIVATE));
+            writingStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void createFileIfNotExists(String filename) {
+    private void writeIntoFile(String filename, String text) {
         try {
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput(filename, Context.MODE_PRIVATE));
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput(filename, Context.MODE_APPEND));
+            BufferedWriter bw = new BufferedWriter(outputStreamWriter);
+            bw.write(text);
+            bw.newLine();
+            bw.close();
             outputStreamWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void someInit() {
-        createFileIfNotExists("liquid.txt");
-        OutputStreamWriter outputStreamWriter;
-        try {
-            outputStreamWriter = new OutputStreamWriter(openFileOutput("liquid1.txt", Context.MODE_PRIVATE));
+    ///////////////////////////////////////////////
 
-            BufferedWriter bw = new BufferedWriter(outputStreamWriter);
 
-                bw.write("Coca-Cola");
-                bw.newLine();
-                bw.write("Fanta");
-                bw.newLine();
-                bw.write("Sprite");
-                bw.newLine();
-                bw.write("Water");
-                bw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+    /////////////////////////////////////////////// Button's onClickListener
+    View.OnClickListener onVoteClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            String first_name = firstNameEditText.getText().toString();
+            String last_name = lastNameEditText.getText().toString();
+            String tempText;
+            String currentText = "";
+            if (first_name.equals("") || last_name.equals("")) {
+                Toast.makeText(MainActivity.this, "Please enter your name!", Toast.LENGTH_LONG).show();
+                return;
             }
-
-    }
-
-    private void readMessage() {
-        String readMessage;
-        try {
-            InputStream inputStream = openFileInput("liquid1.txt");
-
-            if ( inputStream != null ) {
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                String receiveString;
-                StringBuilder stringBuilder = new StringBuilder();
-
-                while ( (receiveString = bufferedReader.readLine()) != null ) {
-                    stringBuilder.append(receiveString);
-                }
-
-                inputStream.close();
-                readMessage = stringBuilder.toString();
-                Toast.makeText(this, "message from: " + readMessage, Toast.LENGTH_SHORT).show();
+            String fullName = first_name + " " + last_name;
+            if (agreeRadioButton.isChecked()) {
+                tempText = fullName + " will come to the party and wants " + drinkSpinner.getSelectedItem().toString()
+                        + " and " + foodSpinner.getSelectedItem().toString();
+                writeIntoFile(votes_filename, tempText);
+                currentText += "-> " + tempText + "\n\n";
+            } else {
+                tempText = fullName + " will not come to the party";
+                writeIntoFile(votes_filename, tempText);
+                currentText += "-> " + tempText + "\n\n";
             }
+            Toast.makeText(MainActivity.this, currentText, Toast.LENGTH_LONG).show();
+            text += currentText;
         }
-        catch (FileNotFoundException e) {
-            Log.e("login activity", "File not found: " + e.toString());
-        } catch (IOException e) {
-            Log.e("login activity", "Can not read file: " + e.toString());
-        }
+    };
+    ///////////////////////////////////////////////
 
-    }
 
+    /////////////////////////////////////////////// RadioButton's onclickListeners
     private RadioGroup.OnCheckedChangeListener radioGroupOnCheckedChangeListener = new RadioGroup.OnCheckedChangeListener() {
+        @Override
         public void onCheckedChanged(RadioGroup group, int checkedId) {
-            int clickedRadioButton = choose_RadioGroup.getCheckedRadioButtonId();
+            int clickedRadioButton = radioGroup.getCheckedRadioButtonId();
             if (clickedRadioButton == 1) {
                 if (!isSpinnerVisible) {
                     isSpinnerVisible = true;
-                    spinner_Layout.setVisibility(View.VISIBLE);
+                    spinnerLayout1.setVisibility(View.VISIBLE);
+                    spinnerLayout2.setVisibility(View.VISIBLE);
+                    fileReadCheckBoxOption.setVisibility(View.VISIBLE);
                 }
             } else if (clickedRadioButton == 2) {
                 isSpinnerVisible = false;
-                spinner_Layout.setVisibility(View.INVISIBLE);
+                spinnerLayout1.setVisibility(View.GONE);
+                spinnerLayout2.setVisibility(View.GONE);
+                fileReadCheckBoxOption.setVisibility(View.GONE);
             }
         }
     };
 
-    private Button.OnClickListener voteButtonOnClickListener = new View.OnClickListener() {
-        public void onClick(View v) {
-            addVoteOptionToStringBuilder();
-        }
-    };
+    ///////////////////////////////////////////////
 
-    private Button.OnClickListener checkVoteButtonOnClickListener = new View.OnClickListener() {
-        public void onClick(View v) {
-            if (file_Read_CheckBox_Option.isChecked()) {
-                createIntentForVoteTakerResult(true);
-            } else {
-                createIntentForVoteTakerResult(false);
-            }
+
+    /////////////////////////////////////////////// Intent
+    private void createIntent(boolean isReadFromFile) {
+        Intent voteTakerActivityIntent = new Intent(this, VoteResultActivity.class);
+        voteTakerActivityIntent.putExtra("isReadFromFile", isReadFromFile);
+        if (stringBuilder != null && !isReadFromFile) {
+            voteTakerActivityIntent.putExtra("votes", stringBuilder.toString());
         }
-    };
+        startActivity(voteTakerActivityIntent);
+    }
+    ///////////////////////////////////////////////
 }
