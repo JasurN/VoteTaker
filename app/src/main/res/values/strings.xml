@@ -11,24 +11,6 @@
     <string name="check_votes">Check votes</string>
     <string name="vote_list">Vote List</string>
     <string name="check_box_string">Read votes from votes.txt</string>
-    <string-array name="drinks">
-        <item>Coca Cola</item>
-        <item>Fanta</item>
-        <item>Sprite</item>
-        <item>Nestle</item>
-        <item>Garzan</item>
-        <item>Water</item>
-    </string-array>
-    <string-array name="foods">
-        <item>Pilov</item>
-        <item>Soup</item>
-        <item>Mastava</item>
-        <item>Lagman</item>
-        <item>Samsa</item>
-        <item>Seafood</item>
-        <item>Rice</item>
-        <item>Fried potatoes</item>
-        <item>Fast food</item>
-    </string-array>
+    <string name="clear_votes">Clear votes</string>
 
 </resources>

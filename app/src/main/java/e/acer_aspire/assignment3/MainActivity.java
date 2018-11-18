@@ -42,10 +42,8 @@ public class MainActivity extends GenerateView {
     private Button voteButton, checkingVotesButton;
     private LinearLayout.LayoutParams linear_params;
     private List<String>drinks, foods;
-    private StringBuilder stringBuilder;
     private CheckBox fileReadCheckBoxOption;
     private OutputStreamWriter writingStream;
-    private File _file;
     private String text;
     private boolean isSpinnerVisible = true;
     private static final String beverage_filename = "liquids.txt";
@@ -56,6 +54,7 @@ public class MainActivity extends GenerateView {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         init();
         if (!isExist(votes_filename)) {
@@ -77,6 +76,8 @@ public class MainActivity extends GenerateView {
     }
 
     private void init() {
+        text = "";
+
         mainLayout = (LinearLayout) findViewById(R.id.main_layout);
         mainLayout.setPadding(20, 20, 20, 20);
 
@@ -130,7 +131,7 @@ public class MainActivity extends GenerateView {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         spinnerLayout1 = getLinearLayoutContent(LinearLayout.VERTICAL, 0, 0, 0, 0);
         //////////
-        drinkSpinner = generateSpinner(getList(beverage_filename), LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 5, 0, 0);
+        drinkSpinner = generateSpinner(getList(getFilename(beverage_filename)), LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 5, 0, 0);
         //////////
         spinnerLayout1.addView(generateTextView(getResources().getString(R.string.drink), 15, 0, 0, 0, 0));
         spinnerLayout1.addView(drinkSpinner);
@@ -143,7 +144,7 @@ public class MainActivity extends GenerateView {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         spinnerLayout2 = getLinearLayoutContent(LinearLayout.VERTICAL, 0, 0, 0, 0);
         //////////
-        foodSpinner = generateSpinner(getList(foods_filename), LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 5, 0, 0);
+        foodSpinner = generateSpinner(getList(getFilename(foods_filename)), LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 5, 0, 0);
         //////////
         spinnerLayout2.addView(generateTextView(getResources().getString(R.string.food), 15, 0, 0, 0, 0));
         spinnerLayout2.addView(foodSpinner);
@@ -156,7 +157,7 @@ public class MainActivity extends GenerateView {
         //////////////////////////////////////////////////////////////////////////////////////////////////
         Space space5 = generateSpace(LinearLayout.LayoutParams.MATCH_PARENT, 20, 0, 0, 0, 0);
         //////////////////////////////////////////////////////////////////////////////////////////////////
-        voteButton = generateButton(245, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 0, 0, 0, R.string.vote,R.color.colorWhite);
+        voteButton = generateButton(245, LinearLayout.LayoutParams.WRAP_CONTENT, 0, 0, 0, 0, R.string.vote, R.color.colorWhite);
         //////////////////////////////////////////////////////////////////////////////////////////////////
         Space space6 = generateSpace(LinearLayout.LayoutParams.MATCH_PARENT, 20, 0, 0, 0, 0);
         //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -211,7 +212,6 @@ public class MainActivity extends GenerateView {
     }
 
     private List<String> getList(String filename) {
-        filename = getFilename(filename);
         Scanner scanner = new Scanner(getResources().openRawResource(getResources().getIdentifier(filename, "raw", getPackageName())));
         List<String>list = new ArrayList<>();
         while (scanner.hasNextLine()) {
@@ -272,10 +272,13 @@ public class MainActivity extends GenerateView {
                         + " and " + foodSpinner.getSelectedItem().toString();
                 writeIntoFile(votes_filename, tempText);
                 currentText += "-> " + tempText + "\n\n";
-            } else {
+            } else if (disagreeRadioButton.isChecked()) {
                 tempText = fullName + " will not come to the party";
                 writeIntoFile(votes_filename, tempText);
                 currentText += "-> " + tempText + "\n\n";
+            } else {
+                Toast.makeText(MainActivity.this, "Please choose an option!\nAgree or disagree?", Toast.LENGTH_LONG).show();
+                return;
             }
             Toast.makeText(MainActivity.this, currentText, Toast.LENGTH_LONG).show();
             text += currentText;
@@ -294,13 +297,15 @@ public class MainActivity extends GenerateView {
                     isSpinnerVisible = true;
                     spinnerLayout1.setVisibility(View.VISIBLE);
                     spinnerLayout2.setVisibility(View.VISIBLE);
-                    fileReadCheckBoxOption.setVisibility(View.VISIBLE);
                 }
             } else if (clickedRadioButton == 2) {
                 isSpinnerVisible = false;
                 spinnerLayout1.setVisibility(View.GONE);
                 spinnerLayout2.setVisibility(View.GONE);
-                fileReadCheckBoxOption.setVisibility(View.GONE);
+            } else {
+                isSpinnerVisible = false;
+                spinnerLayout1.setVisibility(View.GONE);
+                spinnerLayout2.setVisibility(View.GONE);
             }
         }
     };
@@ -312,8 +317,8 @@ public class MainActivity extends GenerateView {
     private void createIntent(boolean isReadFromFile) {
         Intent voteTakerActivityIntent = new Intent(this, VoteResultActivity.class);
         voteTakerActivityIntent.putExtra("isReadFromFile", isReadFromFile);
-        if (stringBuilder != null && !isReadFromFile) {
-            voteTakerActivityIntent.putExtra("votes", stringBuilder.toString());
+        if (!isReadFromFile) {
+            voteTakerActivityIntent.putExtra("votes", text);
         }
         startActivity(voteTakerActivityIntent);
     }
